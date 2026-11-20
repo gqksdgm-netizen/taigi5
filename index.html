@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>臺語閱讀詞彙整理工具</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #faf5f1;
+      --surface: #fffdfb;
+      --surface-soft: #fff5f2;
+      --text: #34282b;
+      --muted: #645459;
+      --rose: #965167;
+      --rose-dark: #75384d;
+      --rose-light: #f7e7e9;
+      --border: #e5d5d1;
+      --danger: #9d343b;
+      --shadow: 0 12px 34px rgba(89, 50, 56, 0.055);
+      --radius: 18px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #ffedeb 0, var(--background) 46%, #f9f3ed 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.55;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .46; }
+    :focus-visible { outline: 3px solid #bd7890; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 64px; }
+    .hero { margin-bottom: 26px; }
+    .eyebrow { color: var(--rose-dark); font-size: .83rem; letter-spacing: .13em; font-weight: 750; margin: 0 0 6px; }
+    h1 { font-size: clamp(1.85rem, 4.8vw, 2.75rem); letter-spacing: .025em; line-height: 1.25; margin: 0 0 11px; }
+    .intro { color: var(--muted); font-size: 1.02rem; margin: 0; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .entry-panel { padding: 24px; }
+    h2 { margin: 0 0 14px; font-size: 1.15rem; letter-spacing: .02em; }
+    .add-form { display: flex; gap: 12px; align-items: stretch; }
+    .field { display: grid; gap: 7px; min-width: 0; }
+    .field.grow { flex: 1; }
+    .label { font-weight: 700; color: #4f383f; font-size: .93rem; }
+    input[type="text"], input[type="search"], select {
+      width: 100%; min-width: 0; height: 46px; padding: 10px 13px;
+      border: 1px solid #d0bdbb; border-radius: 11px; background: #fff; color: var(--text);
+    }
+    input::placeholder { color: #807377; opacity: 1; }
+    .word-field { font-size: 1.22rem; height: 58px !important; padding-inline: 16px !important; border-width: 2px !important; }
+    .btn { min-height: 44px; display: inline-flex; justify-content: center; align-items: center; gap: 7px; border-radius: 11px; border: 1px solid var(--border); padding: 9px 15px; background: #fff; color: var(--text); font-weight: 700; transition: background .12s, border-color .12s; }
+    .btn:hover:not(:disabled) { background: #f9efeb; }
+    .btn.primary { color: #fff; border-color: var(--rose-dark); background: var(--rose-dark); }
+    .btn.primary:hover:not(:disabled) { background: #59263a; }
+    .btn.soft { border-color: #edcbd1; background: var(--rose-light); color: var(--rose-dark); }
+    .btn.soft:hover:not(:disabled) { background: #f2d8dd; }
+    .btn.danger { color: var(--danger); border-color: #e6c4c5; }
+    .btn.danger:hover:not(:disabled) { background: #fff0f0; }
+    .add-submit { align-self: end; min-width: 104px; height: 58px; font-size: 1.05rem; }
+    .helper { font-size: .84rem; margin: 11px 0 0; color: var(--muted); }
+    .status { min-height: 24px; font-size: .9rem; color: var(--rose-dark); margin: 10px 0 0; }
+    .status.error { color: var(--danger); }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px; margin: 18px 0; }
+    .stat { padding: 17px 19px; }
+    .stat-title { margin: 0 0 5px; color: var(--muted); font-size: .82rem; }
+    .stat-number { font-size: clamp(1.55rem, 3.5vw, 2rem); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .list-panel { padding: 24px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .section-heading h2 { margin: 0; }
+    .tools { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .search { max-width: 240px; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+    th { font-size: .87rem; color: #5d444c; background: #fbf0ed; padding: 12px 11px; white-space: nowrap; }
+    th:first-child { border-radius: 9px 0 0 9px; }
+    th:last-child { border-radius: 0 9px 9px 0; }
+    td { padding: 13px 11px; border-bottom: 1px solid #f0e7e3; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .rank { font-weight: 750; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .term { font-size: 1.1rem; font-weight: 800; overflow-wrap: anywhere; }
+    .count-controls { display: inline-flex; gap: 5px; align-items: center; }
+    .count-value { display: inline-block; min-width: 2.2ch; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .small-btn { min-height: 39px; min-width: 39px; padding: 6px 10px; }
+    .meaning-input { width: 100% !important; }
+    .delete-cell { text-align: center; }
+    .empty { padding: 32px 12px; text-align: center; color: var(--muted); }
+    .foot-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 18px; }
+    .foot-actions .danger { margin-left: auto; }
+    .mode-bar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+    .mode-bar h2 { margin: 0; }
+    .mode-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .mode-actions label { font-weight: 700; font-size: .9rem; }
+    .mode-actions select { width: auto; min-width: 164px; }
+    .study-panel { padding: 24px; }
+    .study-note { color: var(--muted); font-size: .9rem; margin: 0 0 16px; }
+    .card-area { max-width: 700px; margin: 0 auto; }
+    .card {
+      display: block; padding: 0; width: 100%; height: clamp(250px, 38vw, 360px);
+      border: 0; border-radius: 22px; background: transparent; perspective: 1200px; cursor: pointer;
+    }
+    .card-inner { width: 100%; height: 100%; position: relative; border-radius: inherit; transform-style: preserve-3d; transition: transform .42s cubic-bezier(.2,.72,.2,1); }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
+    .face {
+      position: absolute; inset: 0; border: 2px solid #e3c5c8; border-radius: inherit;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      padding: 25px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      overflow-wrap: anywhere; white-space: pre-wrap; font-size: clamp(1.8rem, 6.5vw, 3.1rem); font-weight: 800;
+      box-shadow: 0 14px 35px rgba(102, 53, 66, .09);
+    }
+    .front { background: linear-gradient(155deg, #fff9f7, #f9e5e6); color: #573545; }
+    .back { transform: rotateY(180deg); background: linear-gradient(145deg, #fffefa, #f6ede4); color: #3f3631; }
+    .card-instruction { text-align: center; color: var(--muted); font-size: .87rem; margin: 13px 0 18px; }
+    .deck-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .deck-nav .btn { min-width: 96px; }
+    .progress { text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .no-deck { text-align: center; color: var(--muted); border: 1px dashed #d9b9b9; border-radius: 18px; padding: 45px 18px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 720px) {
+      .wrap { padding-top: 28px; }
+      .entry-panel, .list-panel, .study-panel { padding: 17px; }
+      .stats { gap: 8px; }
+      .stat { padding: 14px 12px; }
+      .add-form { gap: 9px; }
+      .add-submit { min-width: 88px; }
+      .section-heading { align-items: stretch; }
+      .tools { width: 100%; }
+      .search { width: 100%; max-width: none; }
+      .search input { width: 100%; }
+      .table-wrap { overflow-x: visible; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      thead { display: none; }
+      tbody { display: grid; gap: 12px; }
+      tbody tr { border: 1px solid var(--border); border-radius: 13px; padding: 9px 13px; background: #fffefa; }
+      td { display: grid; grid-template-columns: minmax(73px, .34fr) minmax(0, 1fr); align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid #f1e9e4; text-align: left; }
+      tbody tr:last-child td { border-bottom: 1px solid #f1e9e4; }
+      tbody tr td:last-child { border-bottom: 0; }
+      td::before { content: attr(data-label); font-weight: 700; color: var(--muted); font-size: .85rem; }
+      .delete-cell { text-align: left; }
+      .meaning-input { min-width: 0; }
+      .foot-actions .danger { margin-left: 0; }
+      .card { height: 285px; }
+    }
+    @media (max-width: 420px) {
+      .wrap { width: calc(100% - 24px); }
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stat-title { font-size: .75rem; }
+      .btn { padding-inline: 11px; }
+      .foot-actions .btn { flex: 1 1 auto; }
+      .deck-nav .btn { min-width: 76px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">TAIWANESE VOCABULARY NOTES</p>
+      <h1>臺語閱讀詞彙整理工具</h1>
+      <p class="intro">看歷屆試題，把看不懂的臺語記下來。出現越多次，越值得先學。</p>
+    </header>
+
+    <section id="list-view">
+      <section class="panel entry-panel" aria-labelledby="add-heading">
+        <h2 id="add-heading">記錄遇到的臺語</h2>
+        <form id="add-form" class="add-form" autocomplete="off">
+          <div class="field grow">
+            <label class="label" for="word-input">臺語詞彙</label>
+            <input id="word-input" class="word-field" type="text" placeholder="例如：這馬、歹勢、袂輸" enterkeyhint="done" maxlength="200" required autofocus>
+          </div>
+          <button class="btn primary add-submit" type="submit">追加 ＋</button>
+        </form>
+        <p class="helper">輸入後按 Enter 即可連續記錄；同一詞彙再次輸入，次數自動 ＋1。</p>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="stats" aria-label="統計資訊">
+        <div class="panel stat"><p class="stat-title">登錄詞彙</p><div class="stat-number" id="word-total">0</div></div>
+        <div class="panel stat"><p class="stat-title">總出現次數</p><div class="stat-number" id="occurrence-total">0</div></div>
+        <div class="panel stat"><p class="stat-title">可複習卡片</p><div class="stat-number" id="study-total">0</div></div>
+      </section>
+
+      <section class="panel list-panel" aria-labelledby="list-heading">
+        <div class="section-heading">
+          <h2 id="list-heading">詞彙頻率排行榜</h2>
+          <button class="btn primary" type="button" id="open-study">用閃卡複習</button>
+        </div>
+        <div class="tools" style="margin-bottom: 16px">
+          <label class="field search" for="search-input">
+            <span class="sr-only">搜尋臺語或華語</span>
+            <input type="search" id="search-input" placeholder="搜尋臺語／華語…" autocomplete="off">
+          </label>
+          <button type="button" id="copy-ranking" class="btn soft">複製排行榜</button>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="詞彙及出現次數（依次數排序）">
+            <colgroup>
+              <col style="width: 8%"><col style="width: 20%"><col style="width: 22%"><col style="width: 35%"><col style="width: 15%">
+            </colgroup>
+            <thead><tr><th scope="col">名次</th><th scope="col">臺語</th><th scope="col">出現次數</th><th scope="col">華語意思</th><th scope="col">操作</th></tr></thead>
+            <tbody id="vocab-rows"></tbody>
+          </table>
+          <p class="empty" id="empty-message" hidden>目前還沒有詞彙。先在上方輸入第一個臺語詞吧！</p>
+        </div>
+        <div class="foot-actions">
+          <button type="button" id="export-csv" class="btn">匯出 CSV</button>
+          <label for="import-csv" class="btn" style="cursor: pointer">匯入 CSV</label>
+          <input type="file" id="import-csv" accept=".csv,text/csv" class="sr-only">
+          <button type="button" id="delete-all" class="btn danger">刪除全部資料</button>
+        </div>
+        <p class="helper">資料只保存在目前瀏覽器的 localStorage。更換裝置或瀏覽器之前，請先匯出 CSV 備份。</p>
+      </section>
+    </section>
+
+    <section id="study-view" hidden>
+      <section class="panel study-panel" aria-labelledby="study-heading">
+        <div class="mode-bar">
+          <h2 id="study-heading">閃卡複習</h2>
+          <div class="mode-actions">
+            <label for="study-order">順序</label>
+            <select id="study-order">
+              <option value="frequency">頻率高的優先</option>
+              <option value="random">隨機排列</option>
+            </select>
+            <button type="button" id="back-to-list" class="btn">返回排行榜</button>
+          </div>
+        </div>
+        <p class="study-note">只有填好華語意思的詞彙會出現在閃卡中。點選卡片即可翻面。</p>
+        <div id="deck-content" class="card-area">
+          <button type="button" id="flashcard" class="card" aria-label="翻開華語意思" aria-pressed="false">
+            <span class="card-inner">
+              <span id="card-front" class="face front"></span>
+              <span id="card-back" class="face back" aria-hidden="true"></span>
+            </span>
+          </button>
+          <p class="card-instruction">點擊卡片翻面 · 可使用鍵盤 ← → 切換</p>
+          <div class="deck-nav">
+            <button type="button" id="prev-card" class="btn">← 前一張</button>
+            <span id="progress" class="progress" aria-live="polite">0 / 0</span>
+            <button type="button" id="next-card" class="btn">下一張 →</button>
+          </div>
+        </div>
+        <div id="no-deck" class="no-deck" hidden>還沒有可以複習的卡片。請先返回排行榜，為詞彙填寫華語意思。</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'taiwanese-reading-vocabulary-v1';
+      const $ = (id) => document.getElementById(id);
+      const elements = {
+        listView: $('list-view'), studyView: $('study-view'), form: $('add-form'),
+        wordInput: $('word-input'), search: $('search-input'), rows: $('vocab-rows'),
+        empty: $('empty-message'), status: $('status'), wordTotal: $('word-total'),
+        occurrenceTotal: $('occurrence-total'), studyTotal: $('study-total'),
+        studyOrder: $('study-order'), deckContent: $('deck-content'), noDeck: $('no-deck'),
+        flashcard: $('flashcard'), cardFront: $('card-front'), cardBack: $('card-back'),
+        progress: $('progress'), prev: $('prev-card'), next: $('next-card'), importCsv: $('import-csv')
+      };
+
+      let entries = loadEntries();
+      let nextOrder = entries.reduce((max, item) => Math.max(max, item.order), -1) + 1;
+      let deck = [];
+      let cardIndex = 0;
+      let isFlipped = false;
+      let isComposing = false;
+      const formatter = new Intl.NumberFormat('zh-Hant');
+
+      function normalizeWord(word) {
+        return String(word).normalize('NFC').trim().replace(/\s+/g, ' ');
+      }
+
+      function loadEntries() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return [];
+          const saved = JSON.parse(raw);
+          if (!saved || saved.version !== 1 || !Array.isArray(saved.items)) {
+            throw new Error('資料格式無法辨識');
+          }
+          const seen = new Set();
+          return saved.items.reduce((out, item, index) => {
+            if (!item || typeof item.word !== 'string' || typeof item.meaning !== 'string' ||
+                !Number.isSafeInteger(item.count) || item.count < 0) return out;
+            const word = normalizeWord(item.word);
+            if (!word || seen.has(word)) return out;
+            seen.add(word);
+            out.push({
+              id: typeof item.id === 'string' && item.id ? item.id : createId(),
+              word, meaning: item.meaning, count: item.count,
+              order: Number.isSafeInteger(item.order) && item.order >= 0 ? item.order : index
+            });
+            return out;
+          }, []);
+        } catch (error) {
+          window.addEventListener('DOMContentLoaded', () => {
+            showStatus('無法讀取原有資料：' + error.message + '。請確認瀏覽器儲存功能。', true);
+          }, { once: true });
+          return [];
+        }
+      }
+
+      function persist() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items: entries }));
+          return true;
+        } catch (error) {
+          showStatus('無法儲存到此瀏覽器。請確認儲存權限及可用空間，並匯出 CSV 備份。', true);
+          return false;
+        }
+      }
+
+      function createId() {
+        return 'w-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 11);
+      }
+
+      function sortedEntries() {
+        return [...entries].sort((a, b) => (b.count - a.count) || (a.order - b.order));
+      }
+
+      function showStatus(message, isError = false) {
+        elements.status.textContent = message;
+        elements.status.classList.toggle('error', isError);
+      }
+
+      function updateStats() {
+        elements.wordTotal.textContent = formatter.format(entries.length);
+        const total = entries.reduce((sum, item) => sum + item.count, 0);
+        elements.occurrenceTotal.textContent = formatter.format(total);
+        elements.studyTotal.textContent = formatter.format(entries.filter(item => item.meaning.trim()).length);
+        $('open-study').disabled = !entries.some(item => item.meaning.trim());
+      }
+
+      function makeButton(text, ariaLabel, className, click, disabled = false) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn ' + className;
+        button.textContent = text;
+        button.setAttribute('aria-label', ariaLabel);
+        button.disabled = disabled;
+        button.addEventListener('click', click);
+        return button;
+      }
+
+      function makeCell(label, className = '') {
+        const cell = document.createElement('td');
+        cell.dataset.label = label;
+        if (className) cell.className = className;
+        return cell;
+      }
+
+      function renderList() {
+        const query = elements.search.value.normalize('NFC').trim().toLocaleLowerCase();
+        const fragment = document.createDocumentFragment();
+        const allSorted = sortedEntries();
+        const ranks = new Map(allSorted.map((item, index) => [item.id, index + 1]));
+        const matching = allSorted.filter(item => !query ||
+          item.word.toLocaleLowerCase().includes(query) || item.meaning.toLocaleLowerCase().includes(query));
+
+        for (const item of matching) {
+          const row = document.createElement('tr');
+          const rankCell = makeCell('名次', 'rank');
+          rankCell.textContent = String(ranks.get(item.id));
+          row.appendChild(rankCell);
+
+          const wordCell = makeCell('臺語', 'term');
+          wordCell.textContent = item.word;
+          row.appendChild(wordCell);
+
+          const countCell = makeCell('出現次數');
+          const countControls = document.createElement('div');
+          countControls.className = 'count-controls';
+          countControls.appendChild(makeButton('−1', item.word + ' 減少一次', 'small-btn', () => changeCount(item.id, -1), item.count === 0));
+          const countNumber = document.createElement('span');
+          countNumber.className = 'count-value';
+          countNumber.textContent = formatter.format(item.count);
+          countControls.appendChild(countNumber);
+          countControls.appendChild(makeButton('＋1', item.word + ' 增加一次', 'small-btn', () => changeCount(item.id, 1)));
+          countCell.appendChild(countControls);
+          row.appendChild(countCell);
+
+          const meaningCell = makeCell('華語意思');
+          const meaningInput = document.createElement('input');
+          meaningInput.type = 'text';
+          meaningInput.className = 'meaning-input';
+          meaningInput.value = item.meaning;
+          meaningInput.placeholder = '輸入華語意思';
+          meaningInput.maxLength = 1000;
+          meaningInput.setAttribute('aria-label', item.word + ' 的華語意思');
+          // Do not redraw the table on each keystroke: keep the caret and focus in place.
+          meaningInput.addEventListener('input', () => {
+            item.meaning = meaningInput.value;
+            persist();
+            updateStats();
+          });
+          meaningInput.addEventListener('change', () => {
+            if (elements.search.value.trim()) renderList();
+          });
+          meaningCell.appendChild(meaningInput);
+          row.appendChild(meaningCell);
+
+          const deleteCell = makeCell('操作', 'delete-cell');
+          deleteCell.appendChild(makeButton('刪除', '刪除 ' + item.word, 'danger small-btn', () => {
+            entries = entries.filter(entry => entry.id !== item.id);
+            persist();
+            renderList();
+            showStatus('已刪除「' + item.word + '」。');
+          }));
+          row.appendChild(deleteCell);
+          fragment.appendChild(row);
+        }
+
+        elements.rows.replaceChildren(fragment);
+        elements.empty.hidden = matching.length !== 0;
+        elements.empty.textContent = entries.length === 0
+          ? '目前還沒有詞彙。先在上方輸入第一個臺語詞吧！'
+          : '找不到符合搜尋條件的詞彙。';
+        updateStats();
+      }
+
+      function changeCount(id, delta) {
+        const entry = entries.find(item => item.id === id);
+        if (!entry) return;
+        const updated = entry.count + delta;
+        if (!Number.isSafeInteger(updated) || updated < 0) return;
+        entry.count = updated;
+        persist();
+        renderList();
+      }
+
+      function recordWord(rawWord) {
+        const word = normalizeWord(rawWord);
+        if (!word) return;
+        let entry = entries.find(item => item.word === word);
+        if (entry) {
+          if (!Number.isSafeInteger(entry.count + 1)) {
+            showStatus('出現次數已超出可計算的範圍。', true);
+            return;
+          }
+          entry.count++;
+        } else {
+          entry = { id: createId(), word, meaning: '', count: 1, order: nextOrder++ };
+          entries.push(entry);
+        }
+        const saved = persist();
+        renderList();
+        if (saved) {
+          showStatus('已記錄「' + word + '」：' + formatter.format(entry.count) + ' 次。');
+        }
+      }
+
+      elements.wordInput.addEventListener('compositionstart', () => { isComposing = true; });
+      elements.wordInput.addEventListener('compositionend', () => { isComposing = false; });
+      elements.form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (isComposing) return;
+        recordWord(elements.wordInput.value);
+        elements.wordInput.value = '';
+        elements.wordInput.focus({ preventScroll: true });
+      });
+      elements.search.addEventListener('input', renderList);
+
+      function buildDeck() {
+        deck = entries.filter(item => item.meaning.trim()).sort((a, b) =>
+          (b.count - a.count) || (a.order - b.order));
+        if (elements.studyOrder.value === 'random') {
+          for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+          }
+        }
+        cardIndex = 0;
+        isFlipped = false;
+        renderCard();
+      }
+
+      function renderCard() {
+        const hasCards = deck.length > 0;
+        elements.deckContent.hidden = !hasCards;
+        elements.noDeck.hidden = hasCards;
+        if (!hasCards) return;
+        const item = deck[cardIndex];
+        elements.cardFront.textContent = item.word;
+        elements.cardBack.textContent = item.meaning;
+        elements.flashcard.classList.toggle('flipped', isFlipped);
+        elements.flashcard.setAttribute('aria-pressed', String(isFlipped));
+        elements.flashcard.setAttribute('aria-label', isFlipped ? '查看臺語詞彙' : '翻開華語意思');
+        elements.cardFront.setAttribute('aria-hidden', String(isFlipped));
+        elements.cardBack.setAttribute('aria-hidden', String(!isFlipped));
+        elements.progress.textContent = (cardIndex + 1) + ' / ' + deck.length;
+        elements.prev.disabled = cardIndex === 0;
+        elements.next.disabled = cardIndex === deck.length - 1;
+      }
+
+      function goToCard(offset) {
+        const next = cardIndex + offset;
+        if (next < 0 || next >= deck.length) return;
+        cardIndex = next;
+        isFlipped = false;
+        renderCard();
+      }
+
+      $('open-study').addEventListener('click', () => {
+        elements.listView.hidden = true;
+        elements.studyView.hidden = false;
+        buildDeck();
+        if (deck.length) elements.flashcard.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+      $('back-to-list').addEventListener('click', () => {
+        elements.studyView.hidden = true;
+        elements.listView.hidden = false;
+        renderList();
+        elements.wordInput.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+      elements.studyOrder.addEventListener('change', buildDeck);
+      elements.flashcard.addEventListener('click', () => {
+        isFlipped = !isFlipped;
+        renderCard();
+      });
+      elements.prev.addEventListener('click', () => goToCard(-1));
+      elements.next.addEventListener('click', () => goToCard(1));
+      document.addEventListener('keydown', (event) => {
+        if (elements.studyView.hidden || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (event.key === 'ArrowLeft') { event.preventDefault(); goToCard(-1); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); goToCard(1); }
+      });
+
+      function csvEscape(value) {
+        return '"' + String(value).replace(/"/g, '""') + '"';
+      }
+
+      function exportCsv() {
+        const rows = [['臺語', '華語', '出現回数'], ...sortedEntries().map(item => [item.word, item.meaning, item.count])];
+        const csv = '\uFEFF' + rows.map(row => row.map(csvEscape).join(',')).join('\r\n') + '\r\n';
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '臺語詞彙排行.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        showStatus('CSV 已匯出。');
+      }
+
+      function parseCsv(text) {
+        const input = text.replace(/^\uFEFF/, '');
+        const rows = [];
+        let row = [], field = '', inQuotes = false;
+        for (let i = 0; i < input.length; i++) {
+          const char = input[i];
+          if (inQuotes) {
+            if (char === '"') {
+              if (input[i + 1] === '"') { field += '"'; i++; }
+              else inQuotes = false;
+            } else { field += char; }
+          } else if (char === '"' && field === '') {
+            inQuotes = true;
+          } else if (char === ',') {
+            row.push(field); field = '';
+          } else if (char === '\r' || char === '\n') {
+            if (char === '\r' && input[i + 1] === '\n') i++;
+            row.push(field); rows.push(row); row = []; field = '';
+          } else { field += char; }
+        }
+        if (inQuotes) throw new Error('CSV 中有未關閉的雙引號');
+        if (row.length || field !== '') { row.push(field); rows.push(row); }
+        return rows.filter(line => line.some(value => value.trim() !== ''));
+      }
+
+      function extractImportRows(csvText) {
+        const rows = parseCsv(csvText);
+        if (!rows.length) throw new Error('CSV 是空的');
+        const normHeader = value => value.trim().replace(/\s+/g, '').toLocaleLowerCase();
+        const first = rows[0].map(normHeader);
+        const wordIndex = first.findIndex(value => ['臺語', '台語', 'taiwanese'].includes(value));
+        const meaningIndex = first.findIndex(value => ['華語', '华语', '中文', 'mandarin'].includes(value));
+        const countIndex = first.findIndex(value => ['出現回数', '出現次數', '出现次数', '次數', 'count', 'frequency'].includes(value));
+        const hasHeader = wordIndex >= 0 && meaningIndex >= 0 && countIndex >= 0;
+        const columns = hasHeader ? [wordIndex, meaningIndex, countIndex] : [0, 1, 2];
+        const dataRows = hasHeader ? rows.slice(1) : rows;
+        const result = [];
+        for (let i = 0; i < dataRows.length; i++) {
+          const line = dataRows[i];
+          const lineNumber = i + (hasHeader ? 2 : 1);
+          if (line.length <= Math.max(...columns)) throw new Error('第 ' + lineNumber + ' 列缺少欄位');
+          const word = normalizeWord(line[columns[0]]);
+          const meaning = line[columns[1]];
+          const rawCount = line[columns[2]].trim();
+          if (!word || !/^(0|[1-9]\d*)$/.test(rawCount) || !Number.isSafeInteger(Number(rawCount))) {
+            throw new Error('第 ' + lineNumber + ' 列的詞彙或次數不正確');
+          }
+          result.push({ word, meaning, count: Number(rawCount) });
+        }
+        if (!result.length) throw new Error('CSV 中沒有詞彙資料');
+        return result;
+      }
+
+      async function importCsv(file) {
+        if (!file) return;
+        try {
+          const incoming = extractImportRows(await file.text());
+          // Stage the import and validate all counts before changing saved data.
+          const updated = entries.map(item => ({ ...item }));
+          const byWord = new Map(updated.map(item => [item.word, item]));
+          let newOrder = nextOrder;
+          let newWords = 0;
+          for (const row of incoming) {
+            const previous = byWord.get(row.word);
+            if (previous) {
+              const total = previous.count + row.count;
+              if (!Number.isSafeInteger(total)) throw new Error('「' + row.word + '」的總次數過大');
+              previous.count = total;
+              if (row.meaning.trim()) previous.meaning = row.meaning;
+            } else {
+              const added = { id: createId(), word: row.word, meaning: row.meaning, count: row.count, order: newOrder++ };
+              updated.push(added);
+              byWord.set(row.word, added);
+              newWords++;
+            }
+          }
+          entries = updated;
+          nextOrder = newOrder;
+          const saved = persist();
+          renderList();
+          if (saved) {
+            showStatus('匯入完成：' + incoming.length + ' 列，新增 ' + newWords + ' 個詞彙。重複詞彙的次數已累加。');
+          }
+        } catch (error) {
+          showStatus('CSV 匯入失敗：' + error.message + '。原有資料未更動。', true);
+        } finally {
+          elements.importCsv.value = '';
+        }
+      }
+
+      async function copyRanking() {
+        const text = sortedEntries().map((item, i) =>
+          (i + 1) + '. ' + item.word + '　' + item.count + '回' + (item.meaning ? '　' + item.meaning : '')
+        ).join('\n');
+        if (!text) { showStatus('目前沒有可以複製的詞彙。'); return; }
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const helper = document.createElement('textarea');
+            helper.value = text;
+            helper.style.position = 'fixed';
+            helper.style.left = '-9999px';
+            document.body.appendChild(helper);
+            helper.select();
+            const ok = document.execCommand('copy');
+            helper.remove();
+            if (!ok) throw new Error('無法存取剪貼簿');
+          }
+          showStatus('排行榜已複製到剪貼簿。');
+        } catch (error) {
+          showStatus('複製失敗，請確認瀏覽器的剪貼簿權限。', true);
+        }
+      }
+
+      $('export-csv').addEventListener('click', exportCsv);
+      elements.importCsv.addEventListener('change', () => importCsv(elements.importCsv.files[0]));
+      $('copy-ranking').addEventListener('click', copyRanking);
+      $('delete-all').addEventListener('click', () => {
+        if (!entries.length) { showStatus('目前沒有資料可以刪除。'); return; }
+        if (!window.confirm('確定要永久刪除全部 ' + entries.length + ' 個詞彙嗎？建議先匯出 CSV 備份。')) return;
+        entries = [];
+        nextOrder = 0;
+        persist();
+        renderList();
+        showStatus('已刪除全部詞彙資料。');
+        elements.wordInput.focus({ preventScroll: true });
+      });
+
+      renderList();
+    })();
+  </script>
+</body>
+</html>
